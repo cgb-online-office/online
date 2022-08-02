@@ -52,13 +52,15 @@ L.WriterTileLayer = L.CanvasTileLayer.extend({
 
 	_onInvalidateTilesMsg: function (textMsg) {
 		var command = app.socket.parseServerCmd(textMsg);
-		if (command.x === undefined || command.y === undefined || command.part === undefined) {
+		if (command.x === undefined || command.y === undefined
+			|| command.part === undefined || command.mode === undefined) {
 			var strTwips = textMsg.match(/\d+/g);
 			command.x = parseInt(strTwips[0]);
 			command.y = parseInt(strTwips[1]);
 			command.width = parseInt(strTwips[2]);
 			command.height = parseInt(strTwips[3]);
 			command.part = this._selectedPart;
+			command.mode = this._selectedMode;
 		}
 		command.part = 0;
 		var topLeftTwips = new L.Point(command.x, command.y);
@@ -75,7 +77,9 @@ L.WriterTileLayer = L.CanvasTileLayer.extend({
 		for (var key in this._tiles) {
 			var coords = this._tiles[key].coords;
 			var bounds = this._coordsToTileBounds(coords);
-			if (coords.part === command.part && invalidBounds.intersects(bounds)) {
+			if (coords.part === command.part &&
+				coords.mode === command.mode &&
+				invalidBounds.intersects(bounds)) {
 				if (this._tiles[key]._invalidCount) {
 					this._tiles[key]._invalidCount += 1;
 				}
@@ -147,6 +151,7 @@ L.WriterTileLayer = L.CanvasTileLayer.extend({
 
 		this._documentInfo = textMsg;
 		this._selectedPart = 0;
+		this._selectedMode = command.mode ? command.mode : 0;
 		this._parts = 1;
 		this._currentPage = command.selectedPart;
 		this._pages = command.parts;

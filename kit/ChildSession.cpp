@@ -2806,9 +2806,9 @@ void ChildSession::loKitCallback(const int type, const std::string& payload)
     case LOK_CALLBACK_INVALIDATE_TILES:
         {
             StringVector tokens(StringVector::tokenize(payload, ','));
-            if (tokens.size() == 5)
+            if (tokens.size() == 6)
             {
-                int part, x, y, width, height;
+                int part, x, y, width, height, mode = 0;
                 try
                 {
                     x = std::stoi(tokens[0]);
@@ -2816,6 +2816,7 @@ void ChildSession::loKitCallback(const int type, const std::string& payload)
                     width = std::stoi(tokens[2]);
                     height = std::stoi(tokens[3]);
                     part = (_docType != "text" ? std::stoi(tokens[4]) : 0); // Writer renders everything as part 0.
+                    mode = std::stoi(tokens[5]);
                 }
                 catch (const std::out_of_range&)
                 {
@@ -2826,10 +2827,12 @@ void ChildSession::loKitCallback(const int type, const std::string& payload)
                     width = INT_MAX;
                     height = INT_MAX;
                     part = 0;
+                    mode = 0;
                 }
 
                 sendTextFrame("invalidatetiles:"
                               " part=" + std::to_string(part) +
+                              " mode=" + std::to_string(mode) +
                               " x=" + std::to_string(x) +
                               " y=" + std::to_string(y) +
                               " width=" + std::to_string(width) +
@@ -2839,6 +2842,12 @@ void ChildSession::loKitCallback(const int type, const std::string& payload)
             {
                 const std::string part = (_docType != "text" ? tokens[1].c_str() : "0"); // Writer renders everything as part 0.
                 sendTextFrame("invalidatetiles: EMPTY, " + part);
+            }
+            else if (tokens.size() == 3 && tokens.equals(0, "EMPTY"))
+            {
+                const std::string part = (_docType != "text" ? tokens[1].c_str() : "0"); // Writer renders everything as part 0.
+                const std::string mode = tokens[2].c_str();
+                sendTextFrame("invalidatetiles: EMPTY, " + part + ", " + mode);
             }
             else
             {

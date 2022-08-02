@@ -171,13 +171,15 @@ L.ImpressTileLayer = L.CanvasTileLayer.extend({
 
 	_onInvalidateTilesMsg: function (textMsg) {
 		var command = app.socket.parseServerCmd(textMsg);
-		if (command.x === undefined || command.y === undefined || command.part === undefined) {
+		if (command.x === undefined || command.y === undefined ||
+			command.part === undefined || command.mode === undefined) {
 			var strTwips = textMsg.match(/\d+/g);
 			command.x = parseInt(strTwips[0]);
 			command.y = parseInt(strTwips[1]);
 			command.width = parseInt(strTwips[2]);
 			command.height = parseInt(strTwips[3]);
 			command.part = this._selectedPart;
+			command.mode = this._selectedMode;
 		}
 		var topLeftTwips = new L.Point(command.x, command.y);
 		var offset = new L.Point(command.width, command.height);
@@ -193,7 +195,8 @@ L.ImpressTileLayer = L.CanvasTileLayer.extend({
 		for (var key in this._tiles) {
 			var coords = this._tiles[key].coords;
 			var bounds = this._coordsToTileBounds(coords);
-			if (coords.part === command.part && invalidBounds.intersects(bounds)) {
+			if (coords.part === command.part && invalidBounds.intersects(bounds) &&
+				coords.mode === command.mode) {
 				if (this._tiles[key]._invalidCount) {
 					this._tiles[key]._invalidCount += 1;
 				}
@@ -222,7 +225,7 @@ L.ImpressTileLayer = L.CanvasTileLayer.extend({
 			// compute the rectangle that each tile covers in the document based
 			// on the zoom level
 			coords = this._keyToTileCoords(key);
-			if (coords.part !== command.part) {
+			if (coords.part !== command.part || coords.mode !== command.mode) {
 				continue;
 			}
 			bounds = this._coordsToTileBounds(coords);
@@ -231,6 +234,7 @@ L.ImpressTileLayer = L.CanvasTileLayer.extend({
 			}
 		}
 		if (command.part === this._selectedPart &&
+			command.mode === this._selectedMode &&
 			command.part !== this._lastValidPart) {
 			this._map.fire('updatepart', {part: this._lastValidPart, docType: this._docType});
 			this._lastValidPart = command.part;
@@ -285,6 +289,7 @@ L.ImpressTileLayer = L.CanvasTileLayer.extend({
 			this._documentInfo = textMsg;
 			this._viewId = parseInt(command.viewid);
 			this._selectedPart = command.selectedPart;
+			this._selectedMode = command.mode;
 			this._selectedParts = command.selectedParts || [command.selectedPart];
 			this._resetPreFetching(true);
 			this._update();

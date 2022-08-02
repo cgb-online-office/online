@@ -58,6 +58,7 @@ static void doc_paintTile(LibreOfficeKitDocument* pThis,
 static void doc_paintPartTile(LibreOfficeKitDocument* pThis,
                               unsigned char* pBuffer,
                               const int nPart,
+                              const int nMode,
                               const int nCanvasWidth, const int nCanvasHeight,
                               const int nTilePosX, const int nTilePosY,
                               const int nTileWidth, const int nTileHeight);
@@ -334,11 +335,13 @@ static void doc_paintTile(LibreOfficeKitDocument* pThis,
 static void doc_paintPartTile(LibreOfficeKitDocument* pThis,
                               unsigned char* pBuffer,
                               const int nPart,
+                              const int nMode,
                               const int nCanvasWidth, const int nCanvasHeight,
                               const int nTilePosX, const int nTilePosY,
                               const int nTileWidth, const int nTileHeight)
 {
     (void) nPart;
+    (void) nMode;
 
     doc_paintTile(pThis, pBuffer, nCanvasWidth, nCanvasHeight, nTilePosX, nTilePosY, nTileWidth, nTileHeight);
 }

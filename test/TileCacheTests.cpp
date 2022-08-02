@@ -198,6 +198,8 @@ bool TileCacheTests::getPartFromInvalidateMessage(const std::string& message, in
     }
     if (tokens.size() == 3 && tokens.equals(1, "EMPTY,"))
         return COOLProtocol::stringToInteger(tokens[2], part);
+    if (tokens.size() == 4 && tokens.equals(1, "EMPTY,"))
+        return COOLProtocol::stringToInteger(tokens[2], part);
     return COOLProtocol::getTokenInteger(tokens, "part", part);
 }
 
@@ -205,8 +207,8 @@ void TileCacheTests::testDesc()
 {
     constexpr auto testname = __func__;
 
-    TileDesc descA = TileDesc(0, 0, 256, 256, 0, 0, 3200, 3200, /* ignored in cache */ 0, 1234, 1, true);
-    TileDesc descB = TileDesc(0, 0, 256, 256, 0, 0, 3200, 3200, /* ignored in cache */ 1, 1235, 2, false);
+    TileDesc descA = TileDesc(0, 0, 0, 256, 256, 0, 0, 3200, 3200, /* ignored in cache */ 0, 1234, 1, true);
+    TileDesc descB = TileDesc(0, 0, 0, 256, 256, 0, 0, 3200, 3200, /* ignored in cache */ 1, 1235, 2, false);
 
     TileDescCacheCompareEq pred;
     LOK_ASSERT_MESSAGE("TileDesc versions do match", descA.getVersion() != descB.getVersion());
@@ -229,13 +231,14 @@ void TileCacheTests::testSimple()
 
     int nviewid = 0;
     int part = 0;
+    int mode = 0;
     int width = 256;
     int height = 256;
     int tilePosX = 0;
     int tilePosY = 0;
     int tileWidth = 3840;
     int tileHeight = 3840;
-    TileDesc tile(nviewid, part, width, height, tilePosX, tilePosY, tileWidth, tileHeight, -1, 0, -1, false);
+    TileDesc tile(nviewid, part, mode, width, height, tilePosX, tilePosY, tileWidth, tileHeight, -1, 0, -1, false);
 
     // No Cache
     Tile tileData = tc.lookupTile(tile);
@@ -317,6 +320,7 @@ void TileCacheTests::testSize()
 
     int nviewid = 0;
     int part = 0;
+    int mode = 0;
     int width = 256;
     int height = 256;
     int tilePosX = 0;
@@ -330,7 +334,7 @@ void TileCacheTests::testSize()
     tc.setMaxCacheSize(maxSize);
     for (int tilePosY = 0; tilePosY < 20; tilePosY++)
     {
-        TileDesc tile(nviewid, part, width, height, tilePosX, tilePosY * tileHeight,
+        TileDesc tile(nviewid, part, mode, width, height, tilePosX, tilePosY * tileHeight,
                       tileWidth, tileHeight, -1, 0, -1, false);
         tile.setWireId(id++);
         tc.saveTileAndNotify(tile, data.data(), data.size());
@@ -1348,6 +1352,9 @@ void TileCacheTests::requestTiles(std::shared_ptr<http::WebSocketSession>& socke
     // pixel
     const int pixTileSize = 256;
 
+    // edit mode (master page / page)
+    int mode = 0;
+
     int rows;
     int cols;
     int tileX;
@@ -1383,9 +1390,9 @@ void TileCacheTests::requestTiles(std::shared_ptr<http::WebSocketSession>& socke
             tileX = tileSize * itCol;
             tileY = tileSize * itRow;
             text
-                = Poco::format("tile nviewid=0 part=%d width=%d height=%d tileposx=%d tileposy=%d "
+                = Poco::format("tile nviewid=0 part=%d mode=%d width=%d height=%d tileposx=%d tileposy=%d "
                                "tilewidth=%d tileheight=%d",
-                               part, pixTileSize, pixTileSize, tileX, tileY, tileWidth, tileHeight);
+                               part, mode, pixTileSize, pixTileSize, tileX, tileY, tileWidth, tileHeight);
 
             sendTextFrame(socket, text, testname);
             tile = assertResponseString(socket, "tile:", testname);
@@ -1394,16 +1401,17 @@ void TileCacheTests::requestTiles(std::shared_ptr<http::WebSocketSession>& socke
             LOK_ASSERT_EQUAL(std::string("tile:"), tokens[0]);
             LOK_ASSERT_EQUAL(0, std::stoi(tokens[1].substr(std::string("nviewid=").size())));
             LOK_ASSERT_EQUAL(part, std::stoi(tokens[2].substr(std::string("part=").size())));
+            LOK_ASSERT_EQUAL(mode, std::stoi(tokens[3].substr(std::string("mode=").size())));
             LOK_ASSERT_EQUAL(pixTileSize,
-                             std::stoi(tokens[3].substr(std::string("width=").size())));
+                             std::stoi(tokens[4].substr(std::string("width=").size())));
             LOK_ASSERT_EQUAL(pixTileSize,
-                             std::stoi(tokens[4].substr(std::string("height=").size())));
-            LOK_ASSERT_EQUAL(tileX, std::stoi(tokens[5].substr(std::string("tileposx=").size())));
-            LOK_ASSERT_EQUAL(tileY, std::stoi(tokens[6].substr(std::string("tileposy=").size())));
+                             std::stoi(tokens[5].substr(std::string("height=").size())));
+            LOK_ASSERT_EQUAL(tileX, std::stoi(tokens[6].substr(std::string("tileposx=").size())));
+            LOK_ASSERT_EQUAL(tileY, std::stoi(tokens[7].substr(std::string("tileposy=").size())));
             LOK_ASSERT_EQUAL(tileWidth,
-                             std::stoi(tokens[7].substr(std::string("tileWidth=").size())));
+                             std::stoi(tokens[8].substr(std::string("tileWidth=").size())));
             LOK_ASSERT_EQUAL(tileHeight,
-                             std::stoi(tokens[8].substr(std::string("tileHeight=").size())));
+                             std::stoi(tokens[9].substr(std::string("tileHeight=").size())));
         }
     }
 

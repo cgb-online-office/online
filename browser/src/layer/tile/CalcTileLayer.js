@@ -160,13 +160,15 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 
 	_onInvalidateTilesMsg: function (textMsg) {
 		var command = app.socket.parseServerCmd(textMsg);
-		if (command.x === undefined || command.y === undefined || command.part === undefined) {
+		if (command.x === undefined || command.y === undefined
+			|| command.part === undefined || command.mode === undefined) {
 			var strTwips = textMsg.match(/\d+/g);
 			command.x = parseInt(strTwips[0]);
 			command.y = parseInt(strTwips[1]);
 			command.width = parseInt(strTwips[2]);
 			command.height = parseInt(strTwips[3]);
 			command.part = this._selectedPart;
+			command.mode = this._selectedMode;
 		}
 		var topLeftTwips = new L.Point(command.x, command.y);
 		var offset = new L.Point(command.width, command.height);
@@ -190,7 +192,9 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 		for (var key in this._tiles) {
 			var coords = this._tiles[key].coords;
 			var bounds = this._coordsToTileBounds(coords);
-			if (coords.part === command.part && invalidBounds.intersects(bounds)) {
+			if (coords.part === command.part &&
+				coords.mode === command.mode &&
+				invalidBounds.intersects(bounds)) {
 				if (this._tiles[key]._invalidCount) {
 					this._tiles[key]._invalidCount += 1;
 				}
@@ -211,7 +215,8 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 			}
 		}
 
-		if (needsNewTiles && command.part === this._selectedPart && this._debug)
+		if (needsNewTiles && command.part === this._selectedPart
+			&& command.mode === this._selectedMode && this._debug)
 		{
 			this._debugAddInvalidationMessage(textMsg);
 		}
@@ -220,7 +225,7 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 			// compute the rectangle that each tile covers in the document based
 			// on the zoom level
 			coords = this._keyToTileCoords(key);
-			if (coords.part !== command.part) {
+			if (coords.part !== command.part || coords.mode !== command.mode) {
 				continue;
 			}
 
@@ -336,6 +341,7 @@ L.CalcTileLayer = L.CanvasTileLayer.extend({
 			this._docType = command.type;
 			this._parts = command.parts;
 			this._selectedPart = command.selectedPart;
+			this._selectedMode = command.mode ? command.mode : 0;
 			if (this.sheetGeometry && this._selectedPart != this.sheetGeometry.getPart()) {
 				// Core initiated sheet switch, need to get full sheetGeometry data for the selected sheet.
 				this.requestSheetGeometryData();

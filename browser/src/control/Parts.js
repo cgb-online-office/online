@@ -195,6 +195,7 @@ L.Map.include({
 			this._addPreviewToQueue(part, 'tile ' +
 							'nviewid=0' + ' ' +
 							'part=' + part + ' ' +
+							'mode=' + docLayer._selectedMode + ' ' +
 							'width=' + maxWidth * app.roundedDpiScale + ' ' +
 							'height=' + maxHeight * app.roundedDpiScale + ' ' +
 							'tileposx=' + tilePosX + ' ' +
@@ -223,6 +224,7 @@ L.Map.include({
 		this._addPreviewToQueue(part, 'tile ' +
 							'nviewid=0' + ' ' +
 							'part=' + part + ' ' +
+							'mode=' + this._docLayer._selectedMode + ' ' +
 							'width=' + width * app.roundedDpiScale + ' ' +
 							'height=' + height * app.roundedDpiScale + ' ' +
 							'tileposx=' + tilePosX + ' ' +
